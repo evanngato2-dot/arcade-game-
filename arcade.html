@@ -1,0 +1,1480 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#080912">
+    <title>Movimento — Arcade corporal</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: #f5f5ff;
+        background: #080912;
+        font-synthesis: none;
+        --muted: #a1a4bc;
+        --panel: rgba(22, 23, 41, .92);
+        --stroke: rgba(255, 255, 255, .1);
+        --mint: #9bffcf;
+        --purple: #a998ff;
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        min-width: 320px;
+        min-height: 100vh;
+        margin: 0;
+        background:
+          radial-gradient(ellipse at 15% 10%, rgba(91, 76, 192, .2), transparent 35%),
+          radial-gradient(ellipse at 90% 85%, rgba(33, 162, 145, .14), transparent 32%),
+          #080912;
+      }
+
+      button, input { font: inherit; }
+      button { color: inherit; }
+      .app { width: min(1160px, 100%); margin: 0 auto; padding: 28px 24px 40px; }
+      .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
+      .brand { display: flex; align-items: center; gap: 12px; }
+      .brand-mark {
+        display: grid;
+        place-items: center;
+        width: 44px;
+        height: 44px;
+        border: 1px solid rgba(155, 255, 207, .25);
+        border-radius: 15px;
+        background: rgba(155, 255, 207, .09);
+        color: var(--mint);
+        font-size: 22px;
+      }
+      h1, h2, h3, p { margin: 0; }
+      h1 { font-size: 20px; letter-spacing: -.04em; }
+      .tagline { margin-top: 3px; color: var(--muted); font-size: 13px; }
+      .privacy-chip { color: #bbc2d8; font-size: 11px; }
+      .edition-link {
+        display: inline-flex;
+        align-items: center;
+        min-height: 36px;
+        padding: 0 12px;
+        border: 1px solid var(--stroke);
+        border-radius: 11px;
+        color: #e1e3f0;
+        font-size: 12px;
+        text-decoration: none;
+      }
+      .mobile-only { display: none; }
+
+      .screen { display: none; }
+      .screen.active { display: block; }
+      .intro { margin-bottom: 20px; }
+      .eyebrow { color: var(--mint); font-size: 11px; font-weight: 750; letter-spacing: .16em; text-transform: uppercase; }
+      h2 { margin-top: 8px; font-size: clamp(25px, 4vw, 36px); letter-spacing: -.05em; }
+      .intro-copy { max-width: 620px; margin-top: 8px; color: var(--muted); font-size: 14px; line-height: 1.6; }
+
+      .settings {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px 22px;
+        margin: 18px 0 20px;
+        padding: 14px 16px;
+        border: 1px solid var(--stroke);
+        border-radius: 16px;
+        background: rgba(16, 17, 31, .76);
+      }
+      .settings-title { margin-right: auto; color: #dfe2f3; font-size: 13px; font-weight: 700; }
+      .toggle { display: inline-flex; align-items: center; gap: 9px; color: #d2d4e4; font-size: 13px; cursor: pointer; }
+      .toggle input { width: 17px; height: 17px; accent-color: #7be6b1; }
+      .settings-note { flex-basis: 100%; color: var(--muted); font-size: 11px; line-height: 1.5; }
+
+      .game-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+      .game-card {
+        display: flex;
+        min-height: 210px;
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 20px;
+        border: 1px solid var(--stroke);
+        border-radius: 18px;
+        background: linear-gradient(155deg, rgba(29, 31, 54, .95), rgba(16, 17, 29, .95));
+        text-align: left;
+        cursor: pointer;
+        transition: transform .16s ease, border-color .16s ease, background .16s ease;
+      }
+      .game-card:hover { transform: translateY(-3px); border-color: rgba(155, 255, 207, .4); background: linear-gradient(155deg, rgba(37, 42, 68, .98), rgba(18, 20, 34, .98)); }
+      .game-icon {
+        display: grid;
+        place-items: center;
+        width: 46px;
+        height: 46px;
+        margin-bottom: 18px;
+        border-radius: 14px;
+        background: rgba(169, 152, 255, .13);
+        font-size: 23px;
+      }
+      .game-card h3 { font-size: 16px; }
+      .game-card p { margin-top: 7px; color: var(--muted); font-size: 12px; line-height: 1.55; }
+      .game-mode { margin-top: auto; padding-top: 14px; color: var(--mint); font-size: 10px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
+      .game-card:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+      .game-card[data-game="mirror"] .game-icon { background: rgba(88, 206, 255, .14); }
+      .game-card[data-game="pingpong"] .game-icon { background: rgba(255, 174, 96, .14); }
+
+
+      .game-screen { position: relative; }
+      .game-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+      .back-button, .restart-button {
+        min-height: 40px;
+        padding: 0 14px;
+        border: 1px solid var(--stroke);
+        border-radius: 12px;
+        background: rgba(27, 29, 48, .9);
+        font-size: 13px;
+        cursor: pointer;
+      }
+      .game-title { flex: 1; min-width: 0; }
+      .game-title h2 { margin: 0; font-size: 18px; }
+      .game-title p { margin-top: 3px; color: var(--muted); font-size: 11px; }
+      .hud { display: flex; align-items: center; gap: 8px; }
+      .hud-chip { padding: 9px 12px; border: 1px solid var(--stroke); border-radius: 12px; background: rgba(19, 20, 35, .8); color: var(--muted); font-size: 12px; white-space: nowrap; }
+      .hud-chip strong { color: #fff; font-variant-numeric: tabular-nums; }
+      #sound-toggle { display: none; }
+      #sound-toggle.visible { display: inline-flex; align-items: center; min-height: 38px; padding: 0 11px; border: 1px solid var(--stroke); border-radius: 11px; background: rgba(19, 20, 35, .8); color: #e4e5f2; font-size: 12px; cursor: pointer; }
+      #position-indicator {
+        position: absolute;
+        right: 18px;
+        bottom: 18px;
+        left: 18px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: min(340px, calc(100% - 36px));
+        margin: 0 auto;
+        padding: 11px 14px;
+        border: 1px solid rgba(255, 255, 255, .14);
+        border-radius: 14px;
+        background: rgba(10, 11, 20, .84);
+        color: #d2d4e4;
+        font-size: 12px;
+        backdrop-filter: blur(12px);
+      }
+      #position-indicator[hidden] { display: none; }
+      #position-label { min-width: 102px; }
+      .position-track {
+        position: relative;
+        flex: 1;
+        height: 8px;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #8171ea, #9bffcf 50%, #8171ea);
+      }
+      #position-marker {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 15px;
+        height: 15px;
+        border: 2px solid #fff;
+        border-radius: 50%;
+        background: var(--mint);
+        box-shadow: 0 0 14px rgba(155, 255, 207, .8);
+        transform: translate(-50%, -50%);
+        transition: left .12s ease-out;
+      }
+      .arena {
+        position: relative;
+        height: min(68vh, 650px);
+        min-height: 360px;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, .12);
+        border-radius: 22px;
+        background:
+          radial-gradient(ellipse at 50% 80%, rgba(33, 47, 67, .24), transparent 55%),
+          #030407;
+        box-shadow: 0 20px 65px rgba(0, 0, 0, .28);
+      }
+      #game-camera, #game-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+      #game-camera { object-fit: cover; transform: scaleX(-1); opacity: .13; }
+      .arena.mirror-mode #game-camera { opacity: 0; }
+      .arena.pingpong-mode #game-camera { opacity: .08; }
+      #game-canvas { pointer-events: none; }
+      .arena-overlay {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: rgba(5, 6, 12, .68);
+        text-align: center;
+        backdrop-filter: blur(5px);
+      }
+      .arena-overlay[hidden] { display: none; }
+      .overlay-card { max-width: 410px; }
+      .overlay-card h3 { font-size: 22px; }
+      .overlay-card p { margin-top: 8px; color: #c0c3d3; font-size: 13px; line-height: 1.6; }
+      .primary-button {
+        min-height: 44px;
+        margin-top: 18px;
+        padding: 0 20px;
+        border: 0;
+        border-radius: 12px;
+        background: var(--mint);
+        color: #07150e;
+        font-weight: 750;
+        cursor: pointer;
+      }
+      .primary-button:disabled { opacity: .55; cursor: wait; }
+      .live-message { min-height: 18px; margin-top: 10px; color: var(--muted); font-size: 12px; text-align: center; }
+
+      .fullscreen-button {
+        position: absolute;
+        z-index: 2;
+        right: 14px;
+        bottom: 14px;
+        display: none;
+        min-height: 42px;
+        padding: 0 13px;
+        border: 1px solid rgba(255, 255, 255, .2);
+        border-radius: 12px;
+        background: rgba(15, 17, 28, .85);
+        color: #fff;
+        font-size: 12px;
+        backdrop-filter: blur(10px);
+      }
+      body.mobile-version .fullscreen-button { display: block; }
+
+      body.mobile-version {
+        min-height: 100dvh;
+        padding-bottom: env(safe-area-inset-bottom);
+      }
+      body.mobile-version .app {
+        width: min(100%, 520px);
+        padding: max(12px, env(safe-area-inset-top)) 14px 18px;
+      }
+      body.mobile-version .topbar { gap: 8px; margin-bottom: 18px; }
+      body.mobile-version .brand { gap: 9px; }
+      body.mobile-version .brand-mark { width: 38px; height: 38px; border-radius: 12px; }
+      body.mobile-version h1 { font-size: 17px; }
+      body.mobile-version .tagline { max-width: 205px; font-size: 11px; }
+      body.mobile-version .privacy-chip { display: none; }
+      body.mobile-version .edition-link { min-height: 42px; padding: 0 11px; }
+      body.mobile-version .intro { margin-bottom: 14px; }
+      body.mobile-version .intro h2 { margin-top: 6px; font-size: 28px; }
+      body.mobile-version .intro-copy { margin-top: 6px; font-size: 13px; }
+      body.mobile-version .settings { gap: 13px; margin: 14px 0; padding: 13px; }
+      body.mobile-version .settings-title { flex-basis: 100%; margin: 0; }
+      body.mobile-version .toggle { min-height: 38px; gap: 8px; font-size: 14px; }
+      body.mobile-version .toggle input { width: 20px; height: 20px; }
+      body.mobile-version .settings-note { font-size: 11px; }
+      body.mobile-version .game-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+      body.mobile-version .game-card { min-height: 174px; padding: 14px; border-radius: 16px; }
+      body.mobile-version .game-card:hover { transform: none; }
+      body.mobile-version .game-icon { width: 40px; height: 40px; margin-bottom: 11px; font-size: 21px; }
+      body.mobile-version .game-card h3 { font-size: 14px; }
+      body.mobile-version .game-card p { margin-top: 5px; font-size: 11px; line-height: 1.45; }
+      body.mobile-version .game-mode { padding-top: 10px; font-size: 9px; letter-spacing: .04em; }
+      body.mobile-version .game-header { display: grid; grid-template-columns: auto 1fr; gap: 9px; margin-bottom: 10px; }
+      body.mobile-version .back-button { min-height: 44px; padding: 0 13px; }
+      body.mobile-version .game-title h2 { font-size: 17px; }
+      body.mobile-version .game-title p { font-size: 10px; }
+      body.mobile-version .hud { grid-column: 1 / -1; gap: 7px; }
+      body.mobile-version .hud-chip { flex: 1; padding: 8px 6px; text-align: center; font-size: 11px; }
+      body.mobile-version #sound-toggle.visible { min-height: 36px; padding: 0 9px; font-size: 11px; }
+      body.mobile-version .arena {
+        height: min(68dvh, 660px);
+        min-height: 330px;
+        border-radius: 17px;
+      }
+      body.mobile-version .live-message { margin-top: 8px; font-size: 11px; }
+      body.mobile-version #position-indicator { bottom: 65px; }
+      body.mobile-version .overlay-card p { font-size: 14px; }
+      body.mobile-version .primary-button { min-height: 48px; }
+
+      @media (orientation: portrait) and (max-width: 800px) {
+        body.pc-version {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100dvh;
+          height: 100dvw;
+          min-height: 0;
+          overflow: hidden;
+          transform: translateX(100dvw) rotate(90deg);
+          transform-origin: top left;
+        }
+        body.pc-version .app {
+          width: 100%;
+          max-width: none;
+          padding: 10px 18px 14px;
+        }
+        body.pc-version .topbar { margin-bottom: 8px; }
+        body.pc-version .intro { margin-bottom: 8px; }
+        body.pc-version .intro h2 { margin-top: 3px; font-size: 25px; }
+        body.pc-version .intro-copy { margin-top: 4px; font-size: 12px; }
+        body.pc-version .settings { flex-wrap: nowrap; gap: 8px 16px; margin: 8px 0; padding: 9px 12px; }
+        body.pc-version .settings-title { flex: 0 0 auto; }
+        body.pc-version .settings-note { flex: 0 1 auto; flex-basis: auto; margin-left: auto; font-size: 9px; white-space: nowrap; }
+        body.pc-version .game-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 7px; }
+        body.pc-version .game-card { min-height: 148px; padding: 9px; border-radius: 12px; }
+        body.pc-version .game-icon { width: 30px; height: 30px; margin-bottom: 6px; font-size: 17px; }
+        body.pc-version .game-card h3 { font-size: 12px; }
+        body.pc-version .game-card p { margin-top: 3px; font-size: 9px; line-height: 1.3; }
+        body.pc-version .game-mode { padding-top: 5px; font-size: 7px; letter-spacing: .04em; }
+        body.pc-version .game-header { display: flex; flex-wrap: nowrap; margin-bottom: 8px; }
+        body.pc-version .game-title { flex: 1; flex-basis: auto; }
+        body.pc-version .hud { width: auto; }
+        body.pc-version .arena { height: min(54vw, 650px); min-height: 190px; }
+      }
+
+      @media (orientation: landscape) and (max-height: 520px) {
+        body.mobile-version {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100dvh;
+          height: 100dvw;
+          min-height: 0;
+          overflow: auto;
+          transform: translateY(100dvh) rotate(-90deg);
+          transform-origin: top left;
+        }
+      }
+
+      @media (orientation: landscape) and (max-height: 520px) and (max-width: 1000px) {
+        body.pc-version .app { width: 100%; max-width: none; padding: 10px 18px 14px; }
+        body.pc-version .topbar { margin-bottom: 8px; }
+        body.pc-version .intro { margin-bottom: 8px; }
+        body.pc-version .intro h2 { margin-top: 3px; font-size: 25px; }
+        body.pc-version .intro-copy { margin-top: 4px; font-size: 12px; }
+        body.pc-version .settings { flex-wrap: nowrap; gap: 8px 16px; margin: 8px 0; padding: 9px 12px; }
+        body.pc-version .settings-title { flex: 0 0 auto; }
+        body.pc-version .settings-note { flex: 0 1 auto; flex-basis: auto; margin-left: auto; font-size: 9px; white-space: nowrap; }
+        body.pc-version .game-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 7px; }
+        body.pc-version .game-card { min-height: 148px; padding: 9px; border-radius: 12px; }
+        body.pc-version .game-icon { width: 30px; height: 30px; margin-bottom: 6px; font-size: 17px; }
+        body.pc-version .game-card h3 { font-size: 12px; }
+        body.pc-version .game-card p { margin-top: 3px; font-size: 9px; line-height: 1.3; }
+        body.pc-version .game-mode { padding-top: 5px; font-size: 7px; letter-spacing: .04em; }
+        body.pc-version .game-header { display: flex; flex-wrap: nowrap; margin-bottom: 8px; }
+        body.pc-version .game-title { flex: 1; flex-basis: auto; }
+        body.pc-version .hud { width: auto; }
+        body.pc-version .arena { height: min(54vh, 650px); min-height: 190px; }
+      }
+
+      @media (min-width: 801px) and (max-height: 850px) {
+        body.pc-version .app { padding-top: 16px; padding-bottom: 18px; }
+        body.pc-version .topbar { margin-bottom: 14px; }
+        body.pc-version .intro { margin-bottom: 14px; }
+        body.pc-version .game-card { min-height: 180px; padding: 16px; }
+        body.pc-version .game-icon { margin-bottom: 12px; }
+      }
+
+      @media (max-width: 800px) {
+        .game-grid { grid-template-columns: 1fr; }
+        .game-card { min-height: 165px; }
+        .game-icon { margin-bottom: 12px; }
+        .arena { height: 62vh; min-height: 340px; }
+        .hud-chip { padding: 8px; }
+      }
+      @media (max-width: 520px) {
+        .app { padding: 18px 14px 28px; }
+        .topbar { align-items: flex-start; }
+        .privacy-chip { max-width: 110px; text-align: right; line-height: 1.4; }
+        .settings { gap: 12px; }
+        .settings-title { flex-basis: 100%; }
+        .game-header { flex-wrap: wrap; }
+        .game-title { flex-basis: calc(100% - 100px); }
+        .hud { width: 100%; }
+        .hud-chip { flex: 1; text-align: center; }
+        .arena { min-height: 54vh; }
+      }
+      @media (max-width: 420px) {
+        body.mobile-version .game-grid { grid-template-columns: 1fr; }
+        body.mobile-version .game-card { min-height: 150px; }
+        body.mobile-version .game-icon { margin-bottom: 8px; }
+      }
+      @media (orientation: landscape) and (max-height: 520px) {
+        body.mobile-version .app { padding-top: 8px; padding-bottom: 8px; }
+        body.mobile-version .topbar { margin-bottom: 8px; }
+        body.mobile-version .arena { height: 62dvh; min-height: 190px; }
+        body.mobile-version .game-header { grid-template-columns: auto 1fr auto; margin-bottom: 6px; }
+        body.mobile-version .hud { grid-column: auto; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">✳</div>
+          <div>
+            <h1>Movimento Arcade</h1>
+            <p class="tagline">Mini jogos controlados pelo seu corpo</p>
+          </div>
+        </div>
+        <a id="edition-link" class="edition-link" href="arcade.html?modo=celular">Modo celular</a>
+        <span class="privacy-chip">Câmera processada neste dispositivo</span>
+      </header>
+
+      <section id="menu-screen" class="screen active">
+        <div class="intro">
+          <p class="eyebrow">Seu corpo é o controle</p>
+          <h2>Escolha um desafio</h2>
+          <p id="intro-copy" class="intro-copy">Ative os rastreadores que quiser e escolha um minijogo. Você pode jogar com as mãos, com o corpo inteiro ou com os dois.</p>
+        </div>
+        <div class="settings" aria-label="Configurações de rastreamento">
+          <span class="settings-title">Rastreamento</span>
+          <label class="toggle"><input id="hands-toggle" type="checkbox" checked> Mãos</label>
+          <label class="toggle"><input id="body-toggle" type="checkbox" checked> Corpo</label>
+          <p class="settings-note">A câmera será solicitada ao iniciar um jogo. A imagem não é enviada para um servidor.</p>
+        </div>
+        <div class="game-grid">
+          <button class="game-card" type="button" data-game="pinch">
+            <span class="game-icon" aria-hidden="true">🤏</span>
+            <h3>Caça às estrelas</h3>
+            <p>Faça uma pinça com polegar e indicador sobre a estrela antes do tempo acabar.</p>
+            <span class="game-mode">Rastreamento das mãos</span>
+          </button>
+          <button class="game-card" type="button" data-game="touch">
+            <span class="game-icon" aria-hidden="true">✋</span>
+            <h3>Toque relâmpago</h3>
+            <p>Toque nos alvos com a ponta do indicador. Cada acerto revela outro alvo.</p>
+            <span class="game-mode">Rastreamento das mãos</span>
+          </button>
+          <button class="game-card" type="button" data-game="dodge">
+            <span class="game-icon" aria-hidden="true">🕺</span>
+            <h3>Desvio cósmico</h3>
+            <p>Mova o corpo para os lados e desvie dos meteoros que caem pela tela.</p>
+            <span class="game-mode">Rastreamento do corpo</span>
+          </button>
+          <button class="game-card" type="button" data-game="dance">
+            <span class="game-icon" aria-hidden="true">💃</span>
+            <h3>Dança completa</h3>
+            <p>Uma coreografia de 1:30 com cinco etapas, movimentos variados e batida original.</p>
+            <span class="game-mode">Dança · rastreamento do corpo</span>
+          </button>
+          <button class="game-card" type="button" data-game="mirror">
+            <span class="game-icon" aria-hidden="true">🪞</span>
+            <h3>Espelho mágico</h3>
+            <p>Veja um personagem copiar sua pose e acompanhar seus movimentos no espelho.</p>
+            <span class="game-mode">Modo livre · rastreamento do corpo</span>
+          </button>
+          <button class="game-card" type="button" data-game="pingpong">
+            <span class="game-icon" aria-hidden="true">🏓</span>
+            <h3>Pingue-pongue</h3>
+            <p>Enfrente o bot. A raquete fica presa ao pulso rastreado e acompanha sua mão.</p>
+            <span class="game-mode">Contra o bot · rastreamento do corpo</span>
+          </button>
+        </div>
+      </section>
+
+      <section id="game-screen" class="screen game-screen">
+        <div class="game-header">
+          <button id="back-button" class="back-button" type="button">← Menu</button>
+          <div class="game-title">
+            <h2 id="active-title">Jogo</h2>
+            <p id="active-instructions">Instruções</p>
+          </div>
+          <div class="hud">
+            <span class="hud-chip">Pontos <strong id="score">0</strong></span>
+            <span id="opponent-score-chip" class="hud-chip" hidden>Bot <strong id="opponent-score">0</strong></span>
+            <span class="hud-chip">Tempo <strong id="time">30</strong></span>
+            <button id="sound-toggle" type="button" aria-pressed="true">♪ Batida ligada</button>
+          </div>
+        </div>
+        <div class="arena">
+          <video id="game-camera" autoplay playsinline muted></video>
+          <canvas id="game-canvas" aria-hidden="true"></canvas>
+          <button id="fullscreen-button" class="fullscreen-button" type="button">Tela cheia</button>
+          <div id="position-indicator" aria-live="polite" hidden>
+            <strong id="position-label">Posição: —</strong>
+            <div class="position-track" aria-hidden="true"><span id="position-marker"></span></div>
+          </div>
+          <div id="game-overlay" class="arena-overlay">
+            <div class="overlay-card">
+              <h3 id="overlay-title">Preparando jogo</h3>
+              <p id="overlay-copy">Permita o acesso à câmera para carregar o rastreamento.</p>
+              <button id="overlay-button" class="primary-button" type="button" hidden>Jogar novamente</button>
+            </div>
+          </div>
+        </div>
+        <p id="live-message" class="live-message" role="status" aria-live="polite">Preparando câmera e rastreamento...</p>
+      </section>
+    </main>
+
+    <script type="module">
+      const requestedMode = new URLSearchParams(window.location.search).get("modo");
+      const mobileVersion = requestedMode === "celular"
+        || (requestedMode !== "pc" && window.matchMedia("(max-width: 800px) and (pointer: coarse)").matches);
+      document.body.classList.toggle("mobile-version", mobileVersion);
+      document.body.classList.toggle("pc-version", !mobileVersion);
+
+      const menuScreen = document.querySelector("#menu-screen");
+      const gameScreen = document.querySelector("#game-screen");
+      const handsToggle = document.querySelector("#hands-toggle");
+      const bodyToggle = document.querySelector("#body-toggle");
+      const camera = document.querySelector("#game-camera");
+      const canvas = document.querySelector("#game-canvas");
+      const ctx = canvas.getContext("2d");
+      const arena = document.querySelector(".arena");
+      const overlay = document.querySelector("#game-overlay");
+      const overlayTitle = document.querySelector("#overlay-title");
+      const overlayCopy = document.querySelector("#overlay-copy");
+      const overlayButton = document.querySelector("#overlay-button");
+      const liveMessage = document.querySelector("#live-message");
+      const scoreLabel = document.querySelector("#score");
+      const opponentScoreChip = document.querySelector("#opponent-score-chip");
+      const opponentScoreLabel = document.querySelector("#opponent-score");
+      const timeLabel = document.querySelector("#time");
+      const soundToggle = document.querySelector("#sound-toggle");
+      const positionIndicator = document.querySelector("#position-indicator");
+      const positionLabel = document.querySelector("#position-label");
+      const positionMarker = document.querySelector("#position-marker");
+      const activeTitle = document.querySelector("#active-title");
+      const activeInstructions = document.querySelector("#active-instructions");
+      const editionLink = document.querySelector("#edition-link");
+      const introCopy = document.querySelector("#intro-copy");
+      const fullscreenButton = document.querySelector("#fullscreen-button");
+      const handConnections = [
+        [0, 1], [1, 2], [2, 3], [3, 4], [0, 5], [5, 6], [6, 7], [7, 8],
+        [5, 9], [9, 10], [10, 11], [11, 12], [9, 13], [13, 14], [14, 15],
+        [15, 16], [13, 17], [17, 18], [18, 19], [19, 20], [17, 0],
+      ];
+      const poseConnections = [
+        [11, 12], [11, 13], [13, 15], [15, 17], [15, 19], [15, 21],
+        [12, 14], [14, 16], [16, 18], [16, 20], [16, 22], [11, 23],
+        [12, 24], [23, 24], [23, 25], [25, 27], [27, 29], [29, 31],
+        [27, 31], [24, 26], [26, 28], [28, 30], [30, 32], [28, 32],
+      ];
+      const games = {
+        dance: {
+          title: "Dança completa",
+          instructions: "Coreografia de 1:30 · 5 etapas · siga os movimentos no ritmo.",
+          hand: false,
+          body: true,
+          duration: 90,
+        },
+        mirror: {
+          title: "Espelho mágico",
+          instructions: "Mexa-se e veja seu personagem imitar sua pose.",
+          hand: false,
+          body: true,
+          duration: 0,
+        },
+        pingpong: {
+          title: "Pingue-pongue",
+          instructions: "Mova o pulso para controlar sua raquete e rebater a bola contra o bot.",
+          hand: false,
+          body: true,
+          duration: 60,
+        },
+        pinch: {
+          title: "Caça às estrelas",
+          instructions: "Junte polegar e indicador e faça a pinça sobre a estrela.",
+          hand: true,
+          body: false,
+        },
+        touch: {
+          title: "Toque relâmpago",
+          instructions: "Alcance o alvo com a ponta do indicador.",
+          hand: true,
+          body: false,
+        },
+        dodge: {
+          title: "Desvio cósmico",
+          instructions: "Mova o tronco para os lados para desviar dos meteoros.",
+          hand: false,
+          body: true,
+        },
+      };
+
+      let detector;
+      let poseDetector;
+      let stream;
+      let animationId;
+      let timerId;
+      let activeGame;
+      let score = 0;
+      let secondsLeft = 30;
+      let target;
+      let meteors = [];
+      let lastFrame = 0;
+      let hitLock = 0;
+      let opponentScore = 0;
+      let pingPongBall;
+      let playerPaddle;
+      let botPaddle;
+      let pointPauseUntil = 0;
+      let danceCue;
+      let danceCueStartedAt = 0;
+      let danceCueDone = false;
+      let danceCueIndex = 0;
+      let danceCueSection = "";
+      let audioContext;
+      let beatTimer;
+      let beatIndex = 0;
+      let soundEnabled = true;
+      const danceCueDuration = 2500;
+      const danceMoves = [
+        { id: "left", icon: "🙋", label: "Levante o braço esquerdo" },
+        { id: "right", icon: "🙋", label: "Levante o braço direito" },
+        { id: "both", icon: "🙌", label: "Levante os dois braços" },
+        { id: "lean-left", icon: "⬅️", label: "Incline o corpo para a esquerda" },
+        { id: "lean-right", icon: "➡️", label: "Incline o corpo para a direita" },
+        { id: "squat", icon: "⬇️", label: "Abaixe o corpo" },
+        { id: "march-left", icon: "🦵", label: "Levante o joelho esquerdo" },
+        { id: "march-right", icon: "🦵", label: "Levante o joelho direito" },
+        { id: "open-arms", icon: "🙆", label: "Abra os braços" },
+      ];
+      const danceSections = [
+        { name: "INTRO", moves: ["left", "right", "both", "both"] },
+        { name: "GROOVE", moves: ["lean-left", "lean-right", "left", "right", "march-left", "march-right", "squat", "both"] },
+        { name: "REFRÃO", moves: ["both", "open-arms", "squat", "both", "lean-left", "lean-right", "open-arms", "both"] },
+        { name: "PASSINHO", moves: ["march-left", "march-right", "lean-left", "lean-right", "march-left", "march-right", "left", "right"] },
+        { name: "FINAL", moves: ["left", "right", "open-arms", "squat", "lean-left", "lean-right", "both", "both"] },
+      ];
+      const danceRoutineLength = danceSections.reduce((sum, section) => sum + section.moves.length, 0);
+
+      if (mobileVersion) {
+        editionLink.href = "arcade.html?modo=pc";
+        editionLink.textContent = "Modo PC";
+        introCopy.textContent = "Escolha um minijogo e apoie o celular em pé, a alguns passos de distância, para enquadrar o corpo inteiro.";
+      } else {
+        editionLink.href = "arcade.html?modo=celular";
+      }
+
+      function resizeCanvas() {
+        const bounds = arena.getBoundingClientRect();
+        const ratio = window.devicePixelRatio || 1;
+        canvas.width = Math.round(bounds.width * ratio);
+        canvas.height = Math.round(bounds.height * ratio);
+        ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      }
+
+      function playBeat() {
+        if (!audioContext || audioContext.state !== "running") return;
+        const now = audioContext.currentTime;
+        const downbeat = beatIndex % 4 === 0;
+        const oscillator = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        oscillator.type = downbeat ? "sine" : "triangle";
+        oscillator.frequency.setValueAtTime(downbeat ? 105 : beatIndex % 2 ? 510 : 390, now);
+        if (downbeat) oscillator.frequency.exponentialRampToValueAtTime(48, now + .14);
+        gain.gain.setValueAtTime(.0001, now);
+        gain.gain.exponentialRampToValueAtTime(downbeat ? .19 : .055, now + .012);
+        gain.gain.exponentialRampToValueAtTime(.0001, now + (downbeat ? .2 : .075));
+        oscillator.connect(gain);
+        gain.connect(audioContext.destination);
+        oscillator.start(now);
+        oscillator.stop(now + .21);
+        beatIndex += 1;
+      }
+
+      function startBeat() {
+        if (!soundEnabled) return;
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) {
+          soundToggle.textContent = "♪ Som indisponível";
+          return;
+        }
+        audioContext ??= new AudioContextClass();
+        audioContext.resume().then(() => {
+          if (!soundEnabled || activeGame !== "dance") return;
+          window.clearInterval(beatTimer);
+          beatIndex = 0;
+          playBeat();
+          beatTimer = window.setInterval(playBeat, 60000 / 96);
+          soundToggle.textContent = "♪ Batida ligada";
+          soundToggle.setAttribute("aria-pressed", "true");
+        }).catch(() => {
+          liveMessage.textContent = "O áudio foi bloqueado. Use o botão de som para tentar ativá-lo.";
+          soundToggle.textContent = "♪ Ativar batida";
+        });
+      }
+
+      function stopBeat() {
+        window.clearInterval(beatTimer);
+        beatTimer = undefined;
+        if (audioContext && audioContext.state !== "closed") {
+          audioContext.close().catch(() => {
+            liveMessage.textContent = "Não foi possível encerrar o áudio corretamente.";
+          });
+          audioContext = undefined;
+        }
+      }
+
+      function setOverlay(title, copy, buttonText = "") {
+        overlayTitle.textContent = title;
+        overlayCopy.textContent = copy;
+        overlayButton.textContent = buttonText;
+        overlayButton.hidden = !buttonText;
+        overlay.hidden = false;
+      }
+
+      function randomTarget(width, height) {
+        const margin = 60;
+        return {
+          x: margin + Math.random() * Math.max(1, width - margin * 2),
+          y: margin + Math.random() * Math.max(1, height - margin * 2),
+          radius: 28,
+        };
+      }
+
+      function drawTarget(time) {
+        if (!target) return;
+        const radius = target.radius * (1 + Math.sin(time / 140) * .08);
+        const colors = activeGame === "pinch"
+          ? ["#fff1a8", "#ffd15c", "#f39a38"]
+          : ["#e2fbff", "#70dcff", "#317bf2"];
+        ctx.save();
+        ctx.shadowColor = colors[1];
+        ctx.shadowBlur = 24;
+        ctx.fillStyle = colors[2];
+        ctx.beginPath();
+        ctx.arc(target.x, target.y, radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = colors[0];
+        ctx.beginPath();
+        ctx.arc(target.x, target.y, radius * .44, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      function drawHand(landmarks, width, height) {
+        const points = landmarks.map((point) => ({
+          x: (1 - point.x) * width,
+          y: point.y * height,
+        }));
+        ctx.save();
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.shadowColor = "rgba(155, 255, 207, .75)";
+        ctx.shadowBlur = 10;
+        ctx.strokeStyle = "rgba(213, 255, 233, .9)";
+        ctx.lineWidth = 3;
+        for (const [start, end] of handConnections) {
+          ctx.beginPath();
+          ctx.moveTo(points[start].x, points[start].y);
+          ctx.lineTo(points[end].x, points[end].y);
+          ctx.stroke();
+        }
+        for (const index of [4, 8, 12, 16, 20]) {
+          ctx.beginPath();
+          ctx.fillStyle = "#fff";
+          ctx.arc(points[index].x, points[index].y, 4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        const thumb = points[4];
+        const index = points[8];
+        const pinch = Math.hypot(thumb.x - index.x, thumb.y - index.y) < Math.min(width, height) * .075;
+        if (pinch) {
+          ctx.beginPath();
+          ctx.strokeStyle = "#ffd15c";
+          ctx.lineWidth = 3;
+          ctx.arc((thumb.x + index.x) / 2, (thumb.y + index.y) / 2, 12, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+        ctx.restore();
+        return { index: points[8], pinchCenter: { x: (thumb.x + index.x) / 2, y: (thumb.y + index.y) / 2 }, pinch };
+      }
+
+      function drawBody(landmarks, width, height, showSkeleton = true) {
+        const points = landmarks.map((point) => ({
+          x: (1 - point.x) * width,
+          y: point.y * height,
+          visible: (point.visibility ?? 1) > .35,
+        }));
+        if (showSkeleton) {
+          ctx.save();
+          ctx.lineCap = "round";
+          ctx.lineJoin = "round";
+          ctx.shadowColor = "rgba(169, 152, 255, .8)";
+          ctx.shadowBlur = 12;
+          for (const [start, end] of poseConnections) {
+            if (!points[start]?.visible || !points[end]?.visible) continue;
+            ctx.beginPath();
+            ctx.strokeStyle = "rgba(190, 176, 255, .88)";
+            ctx.lineWidth = start === 11 || start === 12 || start === 23 || start === 24 ? 4 : 3;
+            ctx.moveTo(points[start].x, points[start].y);
+            ctx.lineTo(points[end].x, points[end].y);
+            ctx.stroke();
+          }
+          for (const point of points) {
+            if (!point.visible) continue;
+            ctx.beginPath();
+            ctx.fillStyle = "#eee9ff";
+            ctx.arc(point.x, point.y, 3, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.restore();
+        }
+        const centerPoints = [points[11], points[12], points[23], points[24]]
+          .filter((point) => point?.visible);
+        return {
+          hips: [points[23], points[24]].filter((point) => point?.visible),
+          wrists: [
+            { wrist: points[15], elbow: points[13] },
+            { wrist: points[16], elbow: points[14] },
+          ].filter(({ wrist, elbow }) => wrist?.visible && elbow?.visible),
+          points,
+          center: centerPoints.length
+            ? centerPoints.reduce((sum, point) => sum + point.x / centerPoints.length, 0)
+            : undefined,
+        };
+      }
+
+      function drawMirror(body, width, height) {
+        const mirrorX = width * .08;
+        const mirrorY = height * .035;
+        const mirrorWidth = width * .84;
+        const mirrorHeight = height * .93;
+        const glass = ctx.createLinearGradient(mirrorX, mirrorY, mirrorX + mirrorWidth, mirrorY + mirrorHeight);
+        glass.addColorStop(0, "rgba(50, 89, 127, .16)");
+        glass.addColorStop(.5, "rgba(73, 128, 166, .08)");
+        glass.addColorStop(1, "rgba(58, 71, 122, .18)");
+        ctx.save();
+        ctx.shadowColor = "rgba(92, 194, 255, .25)";
+        ctx.shadowBlur = 34;
+        ctx.fillStyle = glass;
+        ctx.strokeStyle = "rgba(143, 210, 255, .52)";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.roundRect(mirrorX, mirrorY, mirrorWidth, mirrorHeight, 34);
+        ctx.fill();
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = "rgba(195, 230, 255, .12)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.roundRect(mirrorX + 11, mirrorY + 11, mirrorWidth - 22, mirrorHeight - 22, 27);
+        ctx.stroke();
+
+        if (!body) {
+          ctx.fillStyle = "rgba(226, 239, 255, .75)";
+          ctx.font = "15px Inter, system-ui, sans-serif";
+          ctx.textAlign = "center";
+          ctx.fillText("Entre no espelho para ver seu personagem", width / 2, height * .52);
+          ctx.restore();
+          return;
+        }
+
+        const points = body.points;
+        const shoulders = [points[11], points[12]].filter((point) => point?.visible);
+        const hips = [points[23], points[24]].filter((point) => point?.visible);
+        const shoulderWidth = shoulders.length === 2 ? Math.hypot(shoulders[0].x - shoulders[1].x, shoulders[0].y - shoulders[1].y) : width * .14;
+        const limbWidth = Math.max(9, Math.min(22, shoulderWidth * .105));
+        const torsoFill = ctx.createLinearGradient(width * .35, 0, width * .65, height);
+        torsoFill.addColorStop(0, "#8fffe0");
+        torsoFill.addColorStop(.5, "#61bdfa");
+        torsoFill.addColorStop(1, "#b49bff");
+
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.shadowColor = "rgba(100, 215, 255, .82)";
+        ctx.shadowBlur = 24;
+        ctx.lineWidth = limbWidth;
+        ctx.strokeStyle = torsoFill;
+        for (const [start, end] of poseConnections) {
+          if (!points[start]?.visible || !points[end]?.visible) continue;
+          ctx.beginPath();
+          ctx.moveTo(points[start].x, points[start].y);
+          ctx.lineTo(points[end].x, points[end].y);
+          ctx.stroke();
+        }
+
+        if (shoulders.length === 2 && hips.length === 2) {
+          ctx.fillStyle = "rgba(94, 195, 245, .3)";
+          ctx.beginPath();
+          ctx.moveTo(points[11].x, points[11].y);
+          ctx.lineTo(points[12].x, points[12].y);
+          ctx.lineTo(points[24].x, points[24].y);
+          ctx.lineTo(points[23].x, points[23].y);
+          ctx.closePath();
+          ctx.fill();
+        }
+
+        for (const index of [13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 25, 26, 27, 28, 29, 30, 31, 32]) {
+          const joint = points[index];
+          if (!joint?.visible) continue;
+          ctx.beginPath();
+          ctx.fillStyle = "#efffff";
+          ctx.arc(joint.x, joint.y, Math.max(5, limbWidth * .46), 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        const nose = points[0];
+        if (nose?.visible) {
+          const headRadius = Math.max(15, shoulderWidth * .18);
+          const headY = nose.y - headRadius * .25;
+          const head = ctx.createRadialGradient(
+            nose.x - headRadius * .35, headY - headRadius * .4, 2,
+            nose.x, headY, headRadius
+          );
+          head.addColorStop(0, "#ffffff");
+          head.addColorStop(.48, "#c9f7ff");
+          head.addColorStop(1, "#78a9eb");
+          ctx.fillStyle = head;
+          ctx.beginPath();
+          ctx.ellipse(nose.x, headY, headRadius * .78, headRadius, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = "#27375b";
+          ctx.beginPath();
+          ctx.arc(nose.x - headRadius * .24, headY, Math.max(1.5, headRadius * .055), 0, Math.PI * 2);
+          ctx.arc(nose.x + headRadius * .24, headY, Math.max(1.5, headRadius * .055), 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = "rgba(195, 230, 255, .72)";
+        ctx.font = "700 11px Inter, system-ui, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("SEU ESPELHO", width / 2, mirrorY + mirrorHeight - 19);
+        ctx.restore();
+      }
+
+      function chooseDanceCue(time) {
+        let cueNumber = danceCueIndex % danceRoutineLength;
+        let section = danceSections[0];
+        for (const candidate of danceSections) {
+          if (cueNumber < candidate.moves.length) {
+            section = candidate;
+            break;
+          }
+          cueNumber -= candidate.moves.length;
+        }
+        const moveId = section.moves[cueNumber];
+        danceCue = danceMoves.find((move) => move.id === moveId);
+        danceCueSection = section.name;
+        danceCueIndex += 1;
+        danceCueStartedAt = time;
+        danceCueDone = false;
+      }
+
+      function matchesDanceCue(body, width, height) {
+        if (!body) return false;
+        const points = body.points;
+        const leftWrist = points[15];
+        const rightWrist = points[16];
+        const leftShoulder = points[11];
+        const rightShoulder = points[12];
+        const leftRaised = leftWrist?.visible && leftShoulder?.visible && leftWrist.y < leftShoulder.y - height * .045;
+        const rightRaised = rightWrist?.visible && rightShoulder?.visible && rightWrist.y < rightShoulder.y - height * .045;
+        const hips = [points[23], points[24]].filter((point) => point?.visible);
+        const shoulders = [leftShoulder, rightShoulder].filter((point) => point?.visible);
+        const hipY = hips.length ? hips.reduce((sum, point) => sum + point.y / hips.length, 0) : 0;
+        const shoulderY = shoulders.length ? shoulders.reduce((sum, point) => sum + point.y / shoulders.length, 0) : 0;
+
+        switch (danceCue.id) {
+          case "left": return Boolean(leftRaised);
+          case "right": return Boolean(rightRaised);
+          case "both": return Boolean(leftRaised && rightRaised);
+          case "lean-left": return Number.isFinite(body.center) && body.center < width * .42;
+          case "lean-right": return Number.isFinite(body.center) && body.center > width * .58;
+          case "squat": return hips.length > 0 && shoulders.length > 0 && hipY > shoulderY + height * .2;
+          case "march-left": return points[25]?.visible && points[23]?.visible && points[25].y < points[23].y - height * .04;
+          case "march-right": return points[26]?.visible && points[24]?.visible && points[26].y < points[24].y - height * .04;
+          case "open-arms": return leftWrist?.visible && rightWrist?.visible
+            && Math.abs(leftWrist.x - leftShoulder.x) > width * .055
+            && Math.abs(rightWrist.x - rightShoulder.x) > width * .055;
+          default: return false;
+        }
+      }
+
+      function drawDanceCue(time) {
+        const progress = Math.max(0, 1 - (time - danceCueStartedAt) / danceCueDuration);
+        const width = Math.min(440, arena.clientWidth - 32);
+        const left = (arena.clientWidth - width) / 2;
+        const top = 24;
+
+        ctx.save();
+        ctx.fillStyle = "rgba(13, 12, 25, .84)";
+        ctx.strokeStyle = danceCueDone ? "rgba(155, 255, 207, .8)" : "rgba(255, 255, 255, .16)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.roundRect(left, top, width, 116, 18);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.font = "700 10px Inter, system-ui, sans-serif";
+        ctx.fillStyle = "#aaa3d0";
+        ctx.fillText(`${danceCueSection}  ·  ${Math.min(danceCueIndex, danceRoutineLength)} / ${danceRoutineLength}`, arena.clientWidth / 2, top + 17);
+        ctx.font = "36px sans-serif";
+        ctx.fillStyle = "#fff";
+        ctx.fillText(danceCue.icon, arena.clientWidth / 2, top + 51);
+        ctx.font = "600 15px Inter, system-ui, sans-serif";
+        ctx.fillStyle = danceCueDone ? "#9bffcf" : "#f5f5ff";
+        ctx.fillText(danceCueDone ? "ACERTOU! ✨" : danceCue.label, arena.clientWidth / 2, top + 83);
+
+        ctx.fillStyle = "rgba(255, 255, 255, .14)";
+        ctx.beginPath();
+        ctx.roundRect(left + 18, top + 104, width - 36, 4, 2);
+        ctx.fill();
+        ctx.fillStyle = danceCueDone ? "#9bffcf" : "#a998ff";
+        ctx.beginPath();
+        ctx.roundRect(left + 18, top + 104, (width - 36) * progress, 4, 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      function updateDance(body, time, width, height) {
+        if (!danceCue || time - danceCueStartedAt >= danceCueDuration) chooseDanceCue(time);
+        if (!danceCueDone && matchesDanceCue(body, width, height)) {
+          danceCueDone = true;
+          score += 1;
+          scoreLabel.textContent = String(score);
+        }
+        drawDanceCue(time);
+        liveMessage.textContent = !body
+          ? "Mostre o corpo inteiro e copie o movimento."
+          : danceCueDone ? `Boa! Próximo passo: ${danceCueSection.toLowerCase()}.` : "Faça o movimento antes que a barra acabe!";
+      }
+
+      function registerHit() {
+        score += 1;
+        scoreLabel.textContent = String(score);
+        target = randomTarget(arena.clientWidth, arena.clientHeight);
+      }
+
+      function updateBodyPosition(body, width) {
+        if (!body || !Number.isFinite(body.center)) {
+          positionLabel.textContent = "Posição: não detectado";
+          return;
+        }
+        const x = Math.max(0, Math.min(1, body.center / width));
+        const side = x < .38 ? "esquerda" : x > .62 ? "direita" : "centro";
+        positionLabel.textContent = `Posição: ${side} · ${Math.round(x * 100)}%`;
+        positionMarker.style.left = `${x * 100}%`;
+      }
+
+      function drawMeteors(delta, width, height, body, time) {
+        const player = body?.hips.length
+          ? body.hips.reduce((sum, hip) => sum + hip.x, 0) / body.hips.length
+          : width / 2;
+        if (meteors.length < 5 && Math.random() < .035 + delta * .18) {
+          meteors.push({ x: Math.random() * width, y: -25, radius: 12 + Math.random() * 13, speed: 145 + Math.random() * 110 });
+        }
+
+        ctx.save();
+        ctx.shadowColor = "rgba(255, 116, 99, .9)";
+        ctx.shadowBlur = 18;
+        meteors = meteors.filter((meteor) => {
+          meteor.y += meteor.speed * delta;
+          ctx.fillStyle = "#ff785f";
+          ctx.beginPath();
+          ctx.arc(meteor.x, meteor.y, meteor.radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = "#ffd5a4";
+          ctx.beginPath();
+          ctx.arc(meteor.x - meteor.radius * .25, meteor.y - meteor.radius * .25, meteor.radius * .34, 0, Math.PI * 2);
+          ctx.fill();
+
+          const collision = !meteor.hit && body?.hips.some((hip) =>
+            Math.hypot(hip.x - meteor.x, hip.y - meteor.y) < meteor.radius + 30
+          );
+          if (collision) {
+            meteor.hit = true;
+            score = Math.max(0, score - 1);
+            scoreLabel.textContent = String(score);
+          }
+          return meteor.y < height + meteor.radius;
+        });
+        ctx.restore();
+
+        if (body?.hips.length) {
+          ctx.save();
+          ctx.strokeStyle = "#9bffcf";
+          ctx.shadowColor = "#9bffcf";
+          ctx.shadowBlur = 20;
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.ellipse(player, body.hips.reduce((sum, hip) => sum + hip.y, 0) / body.hips.length, 30, 42, 0, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+
+      function resetPingPong(width, height, towardPlayer) {
+        pingPongBall = {
+          x: width / 2,
+          y: height / 2,
+          vx: (towardPlayer ? -1 : 1) * 260,
+          vy: (Math.random() - .5) * 220,
+          radius: 10,
+        };
+        playerPaddle = { x: width * .18, y: height / 2, angle: 0 };
+        botPaddle = { x: width * .82, y: height / 2, angle: Math.PI };
+        pointPauseUntil = performance.now() + 850;
+      }
+
+      function drawPingPongTable(width, height) {
+        const left = width * .055;
+        const top = height * .09;
+        const tableWidth = width - left * 2;
+        const tableHeight = height * .78;
+        const gradient = ctx.createLinearGradient(left, top, left + tableWidth, top + tableHeight);
+        gradient.addColorStop(0, "#155a6a");
+        gradient.addColorStop(.5, "#11717a");
+        gradient.addColorStop(1, "#155667");
+        ctx.save();
+        ctx.shadowColor = "rgba(0, 0, 0, .5)";
+        ctx.shadowBlur = 24;
+        ctx.fillStyle = gradient;
+        ctx.strokeStyle = "rgba(229, 255, 255, .82)";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.roundRect(left, top, tableWidth, tableHeight, 12);
+        ctx.fill();
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = "rgba(240, 255, 255, .4)";
+        ctx.lineWidth = 2;
+        ctx.setLineDash([8, 9]);
+        ctx.beginPath();
+        ctx.moveTo(width / 2, top + 2);
+        ctx.lineTo(width / 2, top + tableHeight - 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = "rgba(5, 18, 28, .35)";
+        ctx.font = "700 12px Inter, system-ui, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("VOCÊ", left + tableWidth * .22, top + 23);
+        ctx.fillText("BOT", left + tableWidth * .78, top + 23);
+        ctx.restore();
+        return { left, right: left + tableWidth, top, bottom: top + tableHeight, centerX: width / 2 };
+      }
+
+      function drawPaddle(paddle, color, angle = 0) {
+        if (!paddle) return;
+        ctx.save();
+        ctx.translate(paddle.x, paddle.y);
+        ctx.rotate(angle);
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 18;
+        ctx.strokeStyle = "#d9b17a";
+        ctx.lineWidth = 8;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(0, 4);
+        ctx.lineTo(0, 35);
+        ctx.stroke();
+        ctx.fillStyle = color;
+        ctx.strokeStyle = "rgba(255, 255, 255, .88)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.ellipse(0, -2, 19, 25, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function updatePingPong(delta, width, height, body, time) {
+        const table = drawPingPongTable(width, height);
+        if (!pingPongBall) resetPingPong(width, height, true);
+        const wrists = body?.wrists || [];
+        const playerArm = wrists
+          .map((arm) => ({ arm, distance: Math.abs(arm.wrist.x - table.left - (table.right - table.left) * .22) }))
+          .sort((a, b) => a.distance - b.distance)[0]?.arm;
+
+        if (playerArm) {
+          const { wrist, elbow } = playerArm;
+          playerPaddle.x = Math.max(table.left + 24, Math.min(table.centerX - 30, wrist.x));
+          playerPaddle.y = Math.max(table.top + 38, Math.min(table.bottom - 28, wrist.y));
+          playerPaddle.angle = Math.atan2(wrist.y - elbow.y, wrist.x - elbow.x);
+        } else {
+          playerPaddle.x = table.left + (table.centerX - table.left) * .24;
+        }
+
+        botPaddle.x = table.right - (table.right - table.centerX) * .24;
+        const botTargetY = Math.max(table.top + 38, Math.min(table.bottom - 28, pingPongBall.y));
+        const botStep = 360 * delta;
+        botPaddle.y += Math.max(-botStep, Math.min(botStep, botTargetY - botPaddle.y));
+
+        if (time >= pointPauseUntil) {
+          pingPongBall.x += pingPongBall.vx * delta;
+          pingPongBall.y += pingPongBall.vy * delta;
+          if (pingPongBall.y < table.top + pingPongBall.radius || pingPongBall.y > table.bottom - pingPongBall.radius) {
+            pingPongBall.vy *= -1;
+            pingPongBall.y = Math.max(table.top + pingPongBall.radius, Math.min(table.bottom - pingPongBall.radius, pingPongBall.y));
+          }
+
+          const playerDistance = Math.hypot(pingPongBall.x - playerPaddle.x, pingPongBall.y - playerPaddle.y);
+          if (pingPongBall.vx < 0 && playerDistance < 36) {
+            pingPongBall.vx = Math.min(520, Math.abs(pingPongBall.vx) * 1.04);
+            pingPongBall.vy += (pingPongBall.y - playerPaddle.y) * 3.4 + playerPaddle.angle * 30;
+            pingPongBall.x = playerPaddle.x + 38;
+          }
+
+          const botDistance = Math.hypot(pingPongBall.x - botPaddle.x, pingPongBall.y - botPaddle.y);
+          if (pingPongBall.vx > 0 && botDistance < 36) {
+            pingPongBall.vx = -Math.min(520, Math.abs(pingPongBall.vx) * 1.035);
+            pingPongBall.vy += (pingPongBall.y - botPaddle.y) * 2.4;
+            pingPongBall.x = botPaddle.x - 38;
+          }
+
+          if (pingPongBall.x < table.left - 12) {
+            opponentScore += 1;
+            opponentScoreLabel.textContent = String(opponentScore);
+            resetPingPong(width, height, true);
+          } else if (pingPongBall.x > table.right + 12) {
+            score += 1;
+            scoreLabel.textContent = String(score);
+            resetPingPong(width, height, false);
+          }
+        }
+
+        drawPaddle(playerPaddle, "#fa647a", playerPaddle.angle + Math.PI / 2);
+        drawPaddle(botPaddle, "#82d9ff", Math.PI / 2);
+        ctx.save();
+        ctx.shadowColor = "#fff4a1";
+        ctx.shadowBlur = 18;
+        ctx.fillStyle = "#fff4a1";
+        ctx.beginPath();
+        ctx.arc(pingPongBall.x, pingPongBall.y, pingPongBall.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+        liveMessage.textContent = playerArm
+          ? "Sua raquete acompanha o pulso. Reposicione a mão para rebater."
+          : "Mostre seu corpo e mantenha o pulso visível para controlar a raquete.";
+      }
+
+      function animate(time) {
+        if (!activeGame || (secondsLeft <= 0 && activeGame !== "mirror")) return;
+        const width = arena.clientWidth;
+        const height = arena.clientHeight;
+        const delta = lastFrame ? Math.min((time - lastFrame) / 1000, .05) : 0;
+        lastFrame = time;
+        ctx.clearRect(0, 0, width, height);
+
+        let hands = [];
+        let bodies = [];
+        if (camera.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+          if (detector) {
+            const result = detector.detectForVideo(camera, time);
+            hands = (result.landmarks || []).map((landmarks) => drawHand(landmarks, width, height));
+          }
+          if (poseDetector) {
+            const result = poseDetector.detectForVideo(camera, time);
+            bodies = (result.landmarks || []).map((landmarks) =>
+              drawBody(landmarks, width, height, activeGame !== "mirror")
+            );
+          }
+        }
+
+        if (activeGame === "pinch") {
+          if (!target) target = randomTarget(width, height);
+          const caught = hands.some((hand) => hand.pinch && Math.hypot(hand.pinchCenter.x - target.x, hand.pinchCenter.y - target.y) < target.radius + 30);
+          if (caught && time > hitLock) {
+            registerHit();
+            hitLock = time + 450;
+          }
+          drawTarget(time);
+          liveMessage.textContent = hands.length ? "Faça uma pinça em cima da estrela." : "Mostre uma mão para começar.";
+        } else if (activeGame === "touch") {
+          if (!target) target = randomTarget(width, height);
+          const touched = hands.some((hand) => Math.hypot(hand.index.x - target.x, hand.index.y - target.y) < target.radius + 18);
+          if (touched && time > hitLock) {
+            registerHit();
+            hitLock = time + 300;
+          }
+          drawTarget(time);
+          liveMessage.textContent = hands.length ? "Alcance o alvo com a ponta do indicador." : "Mostre uma mão para começar.";
+        } else if (activeGame === "dodge") {
+          const body = bodies[0];
+          updateBodyPosition(body, width);
+          drawMeteors(delta, width, height, body, time);
+          liveMessage.textContent = body ? "Mova o corpo para os lados para escapar dos meteoros." : "Mostre o corpo inteiro para começar.";
+        } else if (activeGame === "dance") {
+          updateDance(bodies[0], time, width, height);
+        } else if (activeGame === "mirror") {
+          drawMirror(bodies[0], width, height);
+          liveMessage.textContent = bodies.length ? "Mova-se e veja seu personagem imitar você." : "Entre no enquadramento da câmera para aparecer no espelho.";
+        } else if (activeGame === "pingpong") {
+          updatePingPong(delta, width, height, bodies[0], time);
+        }
+
+        animationId = requestAnimationFrame(animate);
+      }
+
+      async function loadTrackers() {
+        const fileset = await window.arcadeFilesetPromise;
+        if (handsToggle.checked && games[activeGame].hand) {
+          detector = await fileset.HandLandmarker.createFromOptions(fileset.files, {
+            baseOptions: {
+              modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
+              delegate: "GPU",
+            },
+            runningMode: "VIDEO",
+            numHands: 2,
+            minHandDetectionConfidence: .55,
+            minHandPresenceConfidence: .55,
+            minTrackingConfidence: .5,
+          });
+        }
+        if (bodyToggle.checked && games[activeGame].body) {
+          poseDetector = await fileset.PoseLandmarker.createFromOptions(fileset.files, {
+            baseOptions: {
+              modelAssetPath: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
+              delegate: "GPU",
+            },
+            runningMode: "VIDEO",
+            numPoses: 1,
+            minPoseDetectionConfidence: .5,
+            minPosePresenceConfidence: .5,
+            minTrackingConfidence: .5,
+          });
+        }
+      }
+
+      async function startGame(gameId) {
+        if (stream || detector || poseDetector) cleanupTrackers();
+        activeGame = gameId;
+        const game = games[gameId];
+        if ((game.hand && !handsToggle.checked) || (game.body && !bodyToggle.checked)) {
+          setOverlay("Ative o rastreamento necessário", game.hand
+            ? "Este minijogo precisa do rastreamento das mãos. Volte ao menu e ative Mãos."
+            : "Este minijogo precisa do rastreamento corporal. Volte ao menu e ative Corpo.", "Voltar ao menu");
+          gameScreen.classList.add("active");
+          menuScreen.classList.remove("active");
+          overlayButton.onclick = returnToMenu;
+          return;
+        }
+
+        menuScreen.classList.remove("active");
+        gameScreen.classList.add("active");
+        activeTitle.textContent = game.title;
+        activeInstructions.textContent = game.instructions;
+        score = 0;
+        secondsLeft = game.duration ?? 30;
+        scoreLabel.textContent = "0";
+        timeLabel.textContent = secondsLeft ? String(secondsLeft) : "∞";
+        opponentScore = 0;
+        opponentScoreLabel.textContent = "0";
+        opponentScoreChip.hidden = gameId !== "pingpong";
+        soundToggle.classList.toggle("visible", gameId === "dance");
+        positionIndicator.hidden = gameId !== "dodge";
+        arena.classList.toggle("mirror-mode", gameId === "mirror");
+        arena.classList.toggle("pingpong-mode", gameId === "pingpong");
+        target = undefined;
+        meteors = [];
+        pingPongBall = undefined;
+        lastFrame = 0;
+        hitLock = 0;
+        danceCue = undefined;
+        danceCueStartedAt = 0;
+        danceCueDone = false;
+        danceCueIndex = 0;
+        danceCueSection = "";
+        setOverlay("Preparando jogo", "Permita o acesso à câmera e aguarde o rastreamento.");
+        liveMessage.textContent = "Carregando câmera e rastreamento...";
+
+        try {
+          if (!navigator.mediaDevices?.getUserMedia) {
+            throw new Error("Abra este jogo usando localhost ou uma conexão segura para acessar a câmera.");
+          }
+          stream = await navigator.mediaDevices.getUserMedia({
+            audio: false,
+            video: {
+              facingMode: "user",
+              width: { ideal: mobileVersion ? 960 : 1280 },
+              height: { ideal: mobileVersion ? 540 : 720 },
+              frameRate: { ideal: mobileVersion ? 24 : 30, max: 30 },
+            },
+          });
+          camera.srcObject = stream;
+          await camera.play();
+          if (!window.arcadeFilesetPromise) {
+            window.arcadeFilesetPromise = import("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.21/+esm")
+              .then(async (vision) => ({
+                ...vision,
+                files: await vision.FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.21/wasm"),
+              }));
+          }
+          const importedVision = await window.arcadeFilesetPromise;
+          window.arcadeFilesetPromise = Promise.resolve(importedVision);
+          await loadTrackers();
+          resizeCanvas();
+          overlay.hidden = true;
+          liveMessage.textContent = "Boa sorte! Use o movimento para jogar.";
+          if (gameId === "dance") startBeat();
+          animationId = requestAnimationFrame(animate);
+          if (secondsLeft > 0) {
+            timerId = window.setInterval(() => {
+              secondsLeft -= 1;
+              timeLabel.textContent = String(secondsLeft);
+              if (secondsLeft <= 0) finishGame();
+            }, 1000);
+          }
+        } catch (error) {
+          cleanupTrackers();
+          setOverlay("Não foi possível iniciar", error.name === "NotAllowedError"
+            ? "Permita o acesso à câmera no navegador e tente novamente."
+            : error.message, "Tentar novamente");
+          overlayButton.onclick = () => startGame(gameId);
+          liveMessage.textContent = "A câmera ou o rastreador não iniciou.";
+        }
+      }
+
+      function cleanupTrackers() {
+        cancelAnimationFrame(animationId);
+        window.clearInterval(timerId);
+        stopBeat();
+        stream?.getTracks().forEach((track) => track.stop());
+        stream = undefined;
+        camera.srcObject = null;
+        detector?.close();
+        poseDetector?.close();
+        detector = undefined;
+        poseDetector = undefined;
+        ctx.clearRect(0, 0, arena.clientWidth, arena.clientHeight);
+      }
+
+      function finishGame() {
+        window.clearInterval(timerId);
+        cancelAnimationFrame(animationId);
+        stopBeat();
+        const finishedDance = activeGame === "dance" && danceCueIndex >= danceRoutineLength;
+        setOverlay(finishedDance ? "Coreografia completa!" : "Tempo!", `Você fez ${score} ponto${score === 1 ? "" : "s"}. ${finishedDance ? "Mandou bem na dança!" : "Quer tentar de novo?"}`, "Jogar novamente");
+        overlayButton.onclick = () => startGame(activeGame);
+        liveMessage.textContent = "Partida encerrada.";
+      }
+
+      function returnToMenu() {
+        cleanupTrackers();
+        activeGame = undefined;
+        positionIndicator.hidden = true;
+        opponentScoreChip.hidden = true;
+        arena.classList.remove("mirror-mode", "pingpong-mode");
+        gameScreen.classList.remove("active");
+        menuScreen.classList.add("active");
+      }
+
+      document.querySelectorAll("[data-game]").forEach((card) => {
+        card.addEventListener("click", () => startGame(card.dataset.game));
+      });
+      document.querySelector("#back-button").addEventListener("click", returnToMenu);
+      fullscreenButton.addEventListener("click", async () => {
+        try {
+          if (document.fullscreenElement) await document.exitFullscreen();
+          else await document.querySelector(".arena").requestFullscreen();
+        } catch (error) {
+          liveMessage.textContent = `Não foi possível ativar a tela cheia: ${error.message}`;
+        }
+      });
+      soundToggle.addEventListener("click", () => {
+        soundEnabled = !soundEnabled;
+        if (soundEnabled) {
+          soundToggle.textContent = "♪ Ativando...";
+          startBeat();
+        } else {
+          window.clearInterval(beatTimer);
+          beatTimer = undefined;
+          audioContext?.suspend();
+          soundToggle.textContent = "♪ Batida desligada";
+          soundToggle.setAttribute("aria-pressed", "false");
+        }
+      });
+      window.addEventListener("resize", resizeCanvas);
+
+      resizeCanvas();
+    </script>
+  </body>
+</html>
